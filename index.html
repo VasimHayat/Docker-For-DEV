@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker for Developers</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        hull:   '#0A1826',
+        sea:    '#0B1622',
+        night:  '#071019',
+        panel:  '#0F2231',
+        mist:   '#F4F7F8',
+        line:   '#DCE3E6',
+        edge:   '#22384A',
+        signal: '#EA5A28',
+        harbor: '#1592AE',
+        harborlt:'#63C7DA',
+      },
+      fontFamily: {
+        sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+      },
+    },
+  },
+}
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+  ::selection { background: #EA5A28; color: #fff; }
+  body { -webkit-font-smoothing: antialiased; }
+  pre::-webkit-scrollbar { height: 8px; }
+  pre::-webkit-scrollbar-thumb { background: #22384a; border-radius: 8px; }
+  pre::-webkit-scrollbar-track { background: transparent; }
+  .toc-link.active { color: #0A1826; }
+  .dark .toc-link.active { color: #E6EDF1; }
+  .toc-link.active::before { transform: scaleY(1); }
+  .toc-link::before {
+    content:""; position:absolute; left:-1px; top:2px; bottom:2px; width:2px;
+    background:#EA5A28; transform:scaleY(0); transform-origin:center; transition:transform .18s ease;
+  }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid #EA5A28; outline-offset: 3px; border-radius: 3px;
+  }
+  .t-cmt { color:#5f7488; }
+  .t-kw  { color:#63C7DA; }
+  .t-str { color:#E0A46B; }
+  .t-flag{ color:#9db8c9; }
+  .t-fn  { color:#EA5A28; }
+</style>
+</head>
+<body class="font-sans bg-mist dark:bg-night text-hull dark:text-slate-100 antialiased transition-colors">
+
+<!-- ========== TOP BAR ========== -->
+<header class="sticky top-0 z-30 border-b border-line dark:border-edge/70 bg-mist/85 dark:bg-night/85 backdrop-blur supports-[backdrop-filter]:bg-mist/70 dark:supports-[backdrop-filter]:bg-night/70">
+  <div class="mx-auto max-w-6xl px-5 h-14 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5 font-semibold tracking-tight">
+      <span class="grid place-items-center h-7 w-7 rounded-md bg-hull dark:bg-panel text-mist dark:text-harborlt font-mono text-[13px]">&#9636;</span>
+      Docker<span class="text-harbor font-normal">for developers</span>
+    </a>
+    <div class="flex items-center gap-1">
+      <a href="#cheatsheet" class="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-hull/70 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors px-2">
+        Cheat sheet
+      </a>
+      <button id="theme-toggle" type="button" aria-label="Toggle dark mode"
+        class="grid place-items-center h-9 w-9 rounded-md border border-line dark:border-edge text-hull/70 dark:text-slate-300 hover:bg-white dark:hover:bg-panel transition-colors">
+        <span class="dark:hidden text-[15px]">&#9789;</span>
+        <span class="hidden dark:inline text-[15px]">&#9788;</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="top" class="mx-auto max-w-6xl px-5">
+<div class="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-14">
+
+  <!-- ========== SIDEBAR TOC ========== -->
+  <aside class="hidden lg:block">
+    <nav aria-label="Table of contents" class="sticky top-14 py-12 pr-2">
+      <p class="font-mono text-xs text-hull/45 dark:text-slate-500 mb-4 pl-3">On this page</p>
+      <ul class="space-y-0.5 text-[13.5px]">
+        <li><a href="#why"        class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Why containers</a></li>
+        <li><a href="#concepts"   class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Core concepts</a></li>
+        <li><a href="#cli"        class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Essential CLI</a></li>
+        <li><a href="#dockerfile" class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Writing a Dockerfile</a></li>
+        <li><a href="#buildrun"   class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Build &amp; run</a></li>
+        <li><a href="#compose"    class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Docker Compose</a></li>
+        <li><a href="#volumes"    class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Volumes</a></li>
+        <li><a href="#networking" class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Networking</a></li>
+        <li><a href="#practices"  class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Best practices</a></li>
+        <li><a href="#cheatsheet" class="toc-link relative block pl-3 py-1 text-hull/55 dark:text-slate-400 hover:text-hull dark:hover:text-slate-100 transition-colors">Cheat sheet</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- ========== MAIN ========== -->
+  <main class="min-w-0 py-12 lg:py-14">
+
+    <!-- HERO -->
+    <section class="mb-16">
+      <p class="font-mono text-sm text-harbor mb-4">A practical reference &middot; 2024</p>
+      <h1 class="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05] max-w-2xl">
+        Docker for developers
+      </h1>
+      <p class="mt-5 text-lg text-hull/70 dark:text-slate-300 max-w-xl leading-relaxed">
+        Package an app once with everything it needs, and run it the same way on your laptop,
+        a teammate's machine, and production. Here's the working knowledge, with examples you can paste.
+      </p>
+
+      <div class="mt-8 max-w-xl rounded-xl bg-sea shadow-lg shadow-hull/10 overflow-hidden ring-1 ring-white/5">
+        <div class="flex items-center gap-1.5 px-4 h-9 border-b border-white/5">
+          <span class="h-2.5 w-2.5 rounded-full bg-signal/80"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-[#E0A46B]/70"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-harborlt/60"></span>
+          <span class="ml-3 font-mono text-[11px] text-white/35">zsh &mdash; ~/app</span>
+        </div>
+        <pre class="p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker run -d -p 8080:80 nginx
+<span class="t-cmt">a1b2c3d4e5f6  &middot;  container started</span>
+<span class="text-signal">$</span> curl localhost:8080
+<span class="t-cmt">&lt;title&gt;Welcome to nginx!&lt;/title&gt;</span></pre>
+      </div>
+    </section>
+
+    <!-- WHY -->
+    <section id="why" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Why containers</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch]">
+        "It works on my machine" happens because software depends on more than its own code &mdash; a specific
+        language version, system libraries, environment variables, a database. A <strong class="font-semibold">container</strong>
+        bundles your app together with all of that into one runnable unit, so the environment travels with the code.
+      </p>
+
+      <div class="mt-7 grid sm:grid-cols-2 gap-4 max-w-[68ch]">
+        <div class="rounded-xl border border-line dark:border-edge bg-white dark:bg-panel p-5">
+          <h3 class="font-semibold mb-2">Virtual machine</h3>
+          <p class="text-sm text-hull/65 dark:text-slate-400 leading-relaxed">Ships a whole guest operating system per app. Heavy &mdash; gigabytes of RAM and disk, slow to boot.</p>
+        </div>
+        <div class="rounded-xl border border-signal/30 bg-white dark:bg-panel p-5 ring-1 ring-signal/10">
+          <h3 class="font-semibold mb-2">Container</h3>
+          <p class="text-sm text-hull/65 dark:text-slate-400 leading-relaxed">Shares the host's kernel and isolates just your app. Megabytes, starts in milliseconds, dozens run side by side.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONCEPTS -->
+    <section id="concepts" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Core concepts</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-6">
+        Six words cover almost every conversation about Docker. Learn these and the commands read like English.
+      </p>
+      <dl class="max-w-[68ch] divide-y divide-line dark:divide-edge rounded-xl border border-line dark:border-edge bg-white dark:bg-panel overflow-hidden">
+        <div class="grid sm:grid-cols-[140px_1fr] gap-1 sm:gap-5 p-5">
+          <dt class="font-mono text-sm text-signal">image</dt>
+          <dd class="text-sm text-hull/70 dark:text-slate-400 leading-relaxed">A read-only blueprint &mdash; your app plus its dependencies, frozen. Built from a Dockerfile.</dd>
+        </div>
+        <div class="grid sm:grid-cols-[140px_1fr] gap-1 sm:gap-5 p-5">
+          <dt class="font-mono text-sm text-signal">container</dt>
+          <dd class="text-sm text-hull/70 dark:text-slate-400 leading-relaxed">A running instance of an image. You can start many containers from one image.</dd>
+        </div>
+        <div class="grid sm:grid-cols-[140px_1fr] gap-1 sm:gap-5 p-5">
+          <dt class="font-mono text-sm text-signal">Dockerfile</dt>
+          <dd class="text-sm text-hull/70 dark:text-slate-400 leading-relaxed">A recipe of instructions that tells Docker how to build an image, step by step.</dd>
+        </div>
+        <div class="grid sm:grid-cols-[140px_1fr] gap-1 sm:gap-5 p-5">
+          <dt class="font-mono text-sm text-signal">registry</dt>
+          <dd class="text-sm text-hull/70 dark:text-slate-400 leading-relaxed">Where images live and are shared &mdash; Docker Hub is the default public one; teams run private ones.</dd>
+        </div>
+        <div class="grid sm:grid-cols-[140px_1fr] gap-1 sm:gap-5 p-5">
+          <dt class="font-mono text-sm text-signal">volume</dt>
+          <dd class="text-sm text-hull/70 dark:text-slate-400 leading-relaxed">Storage that outlives a container, so data (like a database) survives restarts and rebuilds.</dd>
+        </div>
+        <div class="grid sm:grid-cols-[140px_1fr] gap-1 sm:gap-5 p-5">
+          <dt class="font-mono text-sm text-signal">network</dt>
+          <dd class="text-sm text-hull/70 dark:text-slate-400 leading-relaxed">A private bridge that lets containers find and talk to each other by name.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- CLI -->
+    <section id="cli" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Essential CLI</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-6">
+        You'll use these every day. The pattern is always <code class="font-mono text-[0.85em] bg-white dark:bg-panel border border-line dark:border-edge rounded px-1.5 py-0.5">docker &lt;verb&gt; &lt;target&gt;</code>.
+      </p>
+
+      <div class="space-y-3 max-w-[68ch]">
+        <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5">
+          <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+            <span class="font-mono text-[11px] text-white/40">run &mdash; start a container from an image</span>
+            <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+          </div>
+          <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker run <span class="t-flag">-d</span> <span class="t-flag">-p</span> 3000:3000 <span class="t-flag">--name</span> web myapp
+<span class="t-cmt"># -d detached &middot; -p host:container ports &middot; --name friendly handle</span></pre>
+        </div>
+        <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5">
+          <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+            <span class="font-mono text-[11px] text-white/40">ps / images &mdash; see what's running &amp; what's built</span>
+            <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+          </div>
+          <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker ps <span class="t-flag">-a</span>          <span class="t-cmt"># running + stopped containers</span>
+<span class="text-signal">$</span> docker images         <span class="t-cmt"># images on this machine</span></pre>
+        </div>
+        <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5">
+          <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+            <span class="font-mono text-[11px] text-white/40">exec / logs &mdash; get inside &amp; debug</span>
+            <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+          </div>
+          <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker exec <span class="t-flag">-it</span> web sh   <span class="t-cmt"># open a shell inside container "web"</span>
+<span class="text-signal">$</span> docker logs <span class="t-flag">-f</span> web       <span class="t-cmt"># stream its output</span></pre>
+        </div>
+        <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5">
+          <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+            <span class="font-mono text-[11px] text-white/40">stop / rm / pull &mdash; lifecycle</span>
+            <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+          </div>
+          <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker stop web        <span class="t-cmt"># graceful shutdown</span>
+<span class="text-signal">$</span> docker rm web          <span class="t-cmt"># remove the container</span>
+<span class="text-signal">$</span> docker pull postgres:16 <span class="t-cmt"># fetch an image from the registry</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCKERFILE -->
+    <section id="dockerfile" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Writing a Dockerfile</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-6">
+        A Dockerfile turns your source into an image. Below is a production-ready
+        <strong class="font-semibold">multi-stage</strong> build for a Node.js/Express app: one stage installs and builds,
+        a second, lean stage ships only what's needed to run.
+      </p>
+
+      <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5 max-w-[68ch]">
+        <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+          <span class="font-mono text-[11px] text-white/40">Dockerfile</span>
+          <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+        </div>
+        <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="t-cmt"># ---- stage 1: build ----</span>
+<span class="t-kw">FROM</span> node:20-alpine <span class="t-kw">AS</span> build
+<span class="t-kw">WORKDIR</span> /app
+<span class="t-kw">COPY</span> package*.json ./
+<span class="t-kw">RUN</span> npm ci
+<span class="t-kw">COPY</span> . .
+<span class="t-kw">RUN</span> npm run build
+
+<span class="t-cmt"># ---- stage 2: run ----</span>
+<span class="t-kw">FROM</span> node:20-alpine
+<span class="t-kw">WORKDIR</span> /app
+<span class="t-kw">ENV</span> NODE_ENV=production
+<span class="t-kw">COPY</span> <span class="t-flag">--from=build</span> /app/node_modules ./node_modules
+<span class="t-kw">COPY</span> <span class="t-flag">--from=build</span> /app/dist ./dist
+<span class="t-kw">USER</span> node
+<span class="t-kw">EXPOSE</span> 3000
+<span class="t-kw">CMD</span> [<span class="t-str">"node"</span>, <span class="t-str">"dist/server.js"</span>]</pre>
+      </div>
+
+      <ul class="mt-6 max-w-[68ch] space-y-2.5 text-sm text-hull/70 dark:text-slate-400">
+        <li class="flex gap-3"><code class="font-mono text-harbor shrink-0 w-20">FROM</code><span>the base image to start from; <code class="font-mono text-[0.9em]">-alpine</code> keeps it tiny.</span></li>
+        <li class="flex gap-3"><code class="font-mono text-harbor shrink-0 w-20">COPY&nbsp;package</code><span>copy manifests first so <code class="font-mono text-[0.9em]">npm ci</code> is cached until deps change.</span></li>
+        <li class="flex gap-3"><code class="font-mono text-harbor shrink-0 w-20">--from=build</code><span>pull only built artifacts into the final image &mdash; build tools stay behind.</span></li>
+        <li class="flex gap-3"><code class="font-mono text-harbor shrink-0 w-20">USER&nbsp;node</code><span>run as a non-root user; never ship a container running as root.</span></li>
+        <li class="flex gap-3"><code class="font-mono text-harbor shrink-0 w-20">CMD</code><span>the default command that runs when the container starts.</span></li>
+      </ul>
+
+      <!-- .dockerignore companion -->
+      <p class="mt-8 text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-4">
+        Pair every Dockerfile with a <strong class="font-semibold">.dockerignore</strong>. It keeps junk out of the build
+        context, so builds are faster and secrets never sneak into an image.
+      </p>
+      <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5 max-w-[68ch]">
+        <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+          <span class="font-mono text-[11px] text-white/40">.dockerignore</span>
+          <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+        </div>
+        <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto">node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.*
+dist
+coverage
+Dockerfile
+.dockerignore
+*.md</pre>
+      </div>
+      <p class="mt-4 text-sm text-hull/65 dark:text-slate-400 max-w-[68ch] leading-relaxed">
+        Ignoring <code class="font-mono text-[0.9em] text-harbor">node_modules</code> matters most: you install fresh inside the
+        image with <code class="font-mono text-[0.9em]">npm ci</code>, so copying the host's copy would only bloat the context and
+        risk platform-mismatched binaries. Excluding <code class="font-mono text-[0.9em] text-harbor">.env</code> keeps credentials out of the image.
+      </p>
+    </section>
+
+    <!-- BUILD & RUN -->
+    <section id="buildrun" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Build &amp; run</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-6">
+        Two steps: <strong class="font-semibold">build</strong> the image from the Dockerfile, then <strong class="font-semibold">run</strong> a container from it.
+      </p>
+
+      <ol class="max-w-[68ch] space-y-4">
+        <li class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5">
+          <div class="flex items-center gap-2 px-4 h-9 border-b border-white/5">
+            <span class="grid place-items-center h-4 w-4 rounded-full bg-signal text-[10px] font-mono text-white font-semibold">1</span>
+            <span class="font-mono text-[11px] text-white/40">build the image, tag it "myapp"</span>
+          </div>
+          <pre class="p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker build <span class="t-flag">-t</span> myapp:1.0 .
+<span class="t-cmt"># -t names/tags the image &middot; "." is the build context (current dir)</span></pre>
+        </li>
+        <li class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5">
+          <div class="flex items-center gap-2 px-4 h-9 border-b border-white/5">
+            <span class="grid place-items-center h-4 w-4 rounded-full bg-signal text-[10px] font-mono text-white font-semibold">2</span>
+            <span class="font-mono text-[11px] text-white/40">run it, mapping a port</span>
+          </div>
+          <pre class="p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker run <span class="t-flag">-d</span> <span class="t-flag">-p</span> 3000:3000 <span class="t-flag">--name</span> web myapp:1.0
+<span class="text-signal">$</span> open http://localhost:3000</pre>
+        </li>
+      </ol>
+    </section>
+
+    <!-- COMPOSE -->
+    <section id="compose" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Docker Compose</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-6">
+        Real apps are more than one container. <strong class="font-semibold">Compose</strong> describes the whole stack in one
+        YAML file and starts it with a single command. Here's a web app wired to a Postgres database.
+      </p>
+
+      <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5 max-w-[68ch]">
+        <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+          <span class="font-mono text-[11px] text-white/40">docker-compose.yml</span>
+          <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+        </div>
+        <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="t-kw">services</span>:
+  <span class="t-fn">web</span>:
+    <span class="t-kw">build</span>: .
+    <span class="t-kw">ports</span>:
+      - <span class="t-str">"3000:3000"</span>
+    <span class="t-kw">environment</span>:
+      DATABASE_URL: postgres://app:secret@db:5432/app
+    <span class="t-kw">depends_on</span>:
+      - db
+
+  <span class="t-fn">db</span>:
+    <span class="t-kw">image</span>: postgres:16-alpine
+    <span class="t-kw">environment</span>:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: app
+    <span class="t-kw">volumes</span>:
+      - pgdata:/var/lib/postgresql/data
+
+<span class="t-kw">volumes</span>:
+  pgdata:</pre>
+      </div>
+
+      <div class="mt-4 rounded-xl bg-sea overflow-hidden ring-1 ring-white/5 max-w-[68ch]">
+        <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+          <span class="font-mono text-[11px] text-white/40">start &amp; stop the whole stack</span>
+          <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+        </div>
+        <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker compose up <span class="t-flag">-d</span>     <span class="t-cmt"># build + start web and db in the background</span>
+<span class="text-signal">$</span> docker compose logs <span class="t-flag">-f</span>    <span class="t-cmt"># follow logs from every service</span>
+<span class="text-signal">$</span> docker compose down       <span class="t-cmt"># stop and remove everything (volumes persist)</span></pre>
+      </div>
+      <p class="mt-4 text-sm text-hull/65 dark:text-slate-400 max-w-[68ch] leading-relaxed">
+        Note how <code class="font-mono text-[0.9em] text-harbor">web</code> reaches the database at hostname
+        <code class="font-mono text-[0.9em] text-harbor">db</code> &mdash; Compose puts both on a shared network and resolves service names automatically.
+      </p>
+    </section>
+
+    <!-- VOLUMES -->
+    <section id="volumes" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Volumes &amp; persistence</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-6">
+        Containers are disposable &mdash; delete one and its internal files vanish. Anything that must survive
+        (databases, uploads) belongs in a <strong class="font-semibold">named volume</strong> that Docker manages outside the container.
+      </p>
+      <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5 max-w-[68ch]">
+        <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+          <span class="font-mono text-[11px] text-white/40">persist Postgres data across restarts</span>
+          <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+        </div>
+        <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker volume create pgdata
+<span class="text-signal">$</span> docker run <span class="t-flag">-d</span> <span class="t-flag">-v</span> pgdata:/var/lib/postgresql/data postgres:16
+<span class="t-cmt"># -v volume:path mounts managed storage into the container</span></pre>
+      </div>
+    </section>
+
+    <!-- NETWORKING -->
+    <section id="networking" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Networking</h2>
+      <p class="text-hull/75 dark:text-slate-300 leading-relaxed max-w-[68ch] mb-6">
+        Each container gets its own isolated network stack. To let containers talk, you put them on the same
+        <strong class="font-semibold">user-defined network</strong>, where Docker runs a small DNS resolver so they can find
+        each other by name &mdash; no hardcoded IPs.
+      </p>
+
+      <div class="grid sm:grid-cols-3 gap-3 max-w-[68ch] mb-6">
+        <div class="rounded-xl border border-line dark:border-edge bg-white dark:bg-panel p-4">
+          <p class="font-mono text-sm text-signal mb-1.5">bridge</p>
+          <p class="text-[13px] text-hull/65 dark:text-slate-400 leading-relaxed">Default. A private virtual network on one host. User-defined bridges add name-based DNS.</p>
+        </div>
+        <div class="rounded-xl border border-line dark:border-edge bg-white dark:bg-panel p-4">
+          <p class="font-mono text-sm text-signal mb-1.5">host</p>
+          <p class="text-[13px] text-hull/65 dark:text-slate-400 leading-relaxed">Shares the host's network directly. No isolation, no port mapping &mdash; fastest, least safe.</p>
+        </div>
+        <div class="rounded-xl border border-line dark:border-edge bg-white dark:bg-panel p-4">
+          <p class="font-mono text-sm text-signal mb-1.5">none</p>
+          <p class="text-[13px] text-hull/65 dark:text-slate-400 leading-relaxed">No networking at all. Fully isolated &mdash; useful for untrusted or offline workloads.</p>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-sea overflow-hidden ring-1 ring-white/5 max-w-[68ch]">
+        <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+          <span class="font-mono text-[11px] text-white/40">put two containers on one network, talk by name</span>
+          <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+        </div>
+        <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker network create appnet
+<span class="text-signal">$</span> docker run <span class="t-flag">-d</span> <span class="t-flag">--network</span> appnet <span class="t-flag">--name</span> db postgres:16
+<span class="text-signal">$</span> docker run <span class="t-flag">-d</span> <span class="t-flag">--network</span> appnet <span class="t-flag">--name</span> web myapp
+<span class="t-cmt"># "web" now reaches Postgres at the hostname "db" &mdash; Docker's DNS resolves it</span></pre>
+      </div>
+
+      <div class="mt-4 rounded-xl bg-sea overflow-hidden ring-1 ring-white/5 max-w-[68ch]">
+        <div class="flex items-center justify-between px-4 h-9 border-b border-white/5">
+          <span class="font-mono text-[11px] text-white/40">inspect the network &amp; publish a port to the host</span>
+          <button class="copy-btn font-mono text-[11px] text-white/40 hover:text-white/80 transition-colors" type="button">copy</button>
+        </div>
+        <pre class="copy-src p-4 font-mono text-[13px] leading-relaxed text-white/85 overflow-x-auto"><span class="text-signal">$</span> docker network inspect appnet  <span class="t-cmt"># subnet, gateway, connected containers</span>
+<span class="text-signal">$</span> docker run <span class="t-flag">-d</span> <span class="t-flag">-p</span> 8080:80 <span class="t-flag">--network</span> appnet nginx
+<span class="t-cmt"># -p publishes to the host; without it, a port is reachable only inside the network</span></pre>
+      </div>
+      <p class="mt-4 text-sm text-hull/65 dark:text-slate-400 max-w-[68ch] leading-relaxed">
+        Rule of thumb: containers on the same user-defined network reach each other on their <em>internal</em> ports by name.
+        You only need <code class="font-mono text-[0.9em] text-harbor">-p</code> when something <em>outside</em> Docker &mdash; your browser, another machine &mdash; needs in.
+        This is exactly what Compose does for you automatically.
+      </p>
+    </section>
+
+    <!-- BEST PRACTICES -->
+    <section id="practices" class="scroll-mt-20 mb-16">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Best practices</h2>
+      <div class="grid sm:grid-cols-2 gap-4 max-w-[68ch]">
+        <div class="rounded-xl border border-line dark:border-edge bg-white dark:bg-panel p-5">
+          <h3 class="font-semibold mb-1.5">Start small</h3>
+          <p class="text-sm text-hull/65 dark:text-slate-400 leading-relaxed">Prefer <code class="font-mono text-[0.9em]">-alpine</code> or <code class="font-mono text-[0.9em]">-slim</code> base images. Smaller images build, push, and boot faster.</p>
+        </div>
+        <div class="rounded-xl border border-line dark:border-edge bg-white dark:bg-panel p-5">
+          <h3 class="font-semibold mb-1.5">Use a .dockerignore</h3>
+          <p class="text-sm text-hull/65 dark:text-slate-400 leading-relaxed">Exclude <code class="font-mono text-[0.9em]">node_modules</code>, <code class="font-mono text-[0.9em]">.git</code>, logs. Keeps the build context lean and builds quick.</p>
+        </div>
+        <div class="rounded-xl border border-line dark:border-edge bg-white dark:bg-panel p-5">
+          <h3 class="font-semibold mb-1.5">Order for caching</h3>
+          <p class="text-sm text-hull/65 dark:text-slate-400 leading-relaxed">Copy dependency manifests and install before copying source, so code edits don't bust the dependency layer.</p>
+        </div>
+        <div class="rounded-xl border border-signal/30 bg-white dark:bg-panel p-5 ring-1 ring-signal/10">
+          <h3 class="font-semibold mb-1.5">Never run as root</h3>
+          <p class="text-sm text-hull/65 dark:text-slate-400 leading-relaxed">Add a <code class="font-mono text-[0.9em]">USER</code> instruction. If the container is breached, the blast radius stays small.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHEAT SHEET -->
+    <section id="cheatsheet" class="scroll-mt-20 mb-8">
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Cheat sheet</h2>
+      <div class="max-w-[68ch] rounded-xl border border-line dark:border-edge bg-white dark:bg-panel overflow-hidden">
+        <table class="w-full text-sm">
+          <tbody class="divide-y divide-line dark:divide-edge">
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top w-1/2 sm:w-2/5">docker build -t name .</td><td class="p-3.5 text-hull/65 dark:text-slate-400">Build image from Dockerfile</td></tr>
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top">docker run -d -p 80:80 img</td><td class="p-3.5 text-hull/65 dark:text-slate-400">Run container, map port</td></tr>
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top">docker ps -a</td><td class="p-3.5 text-hull/65 dark:text-slate-400">List all containers</td></tr>
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top">docker exec -it c sh</td><td class="p-3.5 text-hull/65 dark:text-slate-400">Shell into a container</td></tr>
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top">docker logs -f c</td><td class="p-3.5 text-hull/65 dark:text-slate-400">Follow container logs</td></tr>
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top">docker network create net</td><td class="p-3.5 text-hull/65 dark:text-slate-400">Create a user-defined network</td></tr>
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top">docker compose up -d</td><td class="p-3.5 text-hull/65 dark:text-slate-400">Start the whole stack</td></tr>
+            <tr><td class="p-3.5 font-mono text-[12.5px] text-hull dark:text-slate-100 align-top">docker system prune</td><td class="p-3.5 text-hull/65 dark:text-slate-400">Reclaim space from unused data</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="mt-14 pt-8 border-t border-line dark:border-edge max-w-[68ch] flex flex-wrap items-center justify-between gap-4">
+      <p class="text-sm text-hull/50 dark:text-slate-500">Docker for developers &mdash; a hands-on reference.</p>
+      <a href="#top" class="font-mono text-xs text-harbor hover:text-hull dark:hover:text-slate-100 transition-colors">back to top</a>
+    </footer>
+
+  </main>
+</div>
+</div>
+
+<script>
+  // Theme: default to system preference, toggle in-memory (no storage).
+  (function () {
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (prefersDark) document.documentElement.classList.add('dark');
+    var btn = document.getElementById('theme-toggle');
+    if (btn) btn.addEventListener('click', function () {
+      document.documentElement.classList.toggle('dark');
+    });
+  })();
+
+  // Copy buttons
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var card = btn.closest('.rounded-xl');
+      var pre = card ? card.querySelector('.copy-src') : null;
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        var original = btn.textContent;
+        btn.textContent = 'copied';
+        btn.classList.add('text-harborlt');
+        setTimeout(function () { btn.textContent = original; btn.classList.remove('text-harborlt'); }, 1400);
+      }).catch(function () { btn.textContent = 'ctrl+c'; });
+    });
+  });
+
+  // Scroll-spy for TOC
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+  var map = {};
+  links.forEach(function (l) { map[l.getAttribute('href').slice(1)] = l; });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (l) { l.classList.remove('active'); });
+        var active = map[e.target.id];
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+  document.querySelectorAll('main section[id]').forEach(function (s) { observer.observe(s); });
+</script>
+</body>
+</html>
